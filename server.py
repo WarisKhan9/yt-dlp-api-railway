@@ -32,6 +32,8 @@ def get_video_info():
                 'duration': info.get('duration'),
                 'view_count': info.get('view_count'),
                 'like_count': info.get('like_count'),
+                'uploader': info.get('uploader'),
+                'channel_url': info.get('channel_url'),
                 'formats': [
                     {
                         'format_id': f.get('format_id'),
@@ -80,6 +82,99 @@ def get_trending_videos():
         }
     ]
     return jsonify(videos)
+
+# ✅ NEW: /search?q=term
+@app.route('/search', methods=['GET'])
+def search_videos():
+    query = request.args.get('q')
+    if not query:
+        return jsonify({'error': 'Missing q parameter'}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'forcejson': True,
+    }
+
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            search_result = ydl.extract_info(f"ytsearch10:{query}", download=False)
+            videos = [{
+                'id': e.get('id'),
+                'title': e.get('title'),
+                'url': e.get('url'),
+                'thumbnail': e.get('thumbnail'),
+            } for e in search_result.get('entries', [])]
+            return jsonify(videos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ✅ NEW: /channel?url=...
+@app.route('/channel', methods=['GET'])
+def get_channel_videos():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'Missing url parameter'}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'forcejson': True,
+    }
+
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            channel_info = ydl.extract_info(url, download=False)
+            videos = [{
+                'id': v.get('id'),
+                'title': v.get('title'),
+                'url': v.get('url'),
+                'thumbnail': v.get('thumbnail')
+            } for v in channel_info.get('entries', [])]
+            return jsonify({
+                'channel': {
+                    'title': channel_info.get('title'),
+                    'uploader': channel_info.get('uploader'),
+                    'url': url,
+                    'videos': videos
+                }
+            })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ✅ NEW: /playlist?url=...
+@app.route('/playlist', methods=['GET'])
+def get_playlist_videos():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'Missing url parameter'}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'forcejson': True,
+    }
+
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            playlist = ydl.extract_info(url, download=False)
+            videos = [{
+                'id': v.get('id'),
+                'title': v.get('title'),
+                'url': v.get('url'),
+                'thumbnail': v.get('thumbnail')
+            } for v in playlist.get('entries', [])]
+            return jsonify({
+                'playlist': {
+                    'title': playlist.get('title'),
+                    'videos': videos
+                }
+            })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
