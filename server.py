@@ -1,8 +1,11 @@
-
 from flask import Flask, request, jsonify
 from yt_dlp import YoutubeDL
 
 app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def home():
+    return '✅ YouTube DL API is running!'
 
 @app.route('/info', methods=['GET'])
 def get_video_info():
