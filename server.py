@@ -5,29 +5,29 @@ import os
 app = Flask(__name__)
 COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
-def get_ydl_opts(flat=False):
-    return {
+@app.route('/', methods=['GET'])
+def root():
+    return '✅ YouTube DL API is running!'
+
+@app.route('/info', methods=['GET'])
+def get_video_info():
+    video_url = request.args.get('url')
+    if not video_url:
+        return jsonify({'error': 'Missing url parameter'}), 400
+
+    ydl_opts = {
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-        'extract_flat': flat,
+        'format': 'best',
         'cookiefile': COOKIES_PATH
     }
 
-@app.route('/')
-def root():
-    return '✅ YouTube DL API is running!'
-
-@app.route('/info')
-def get_video_info():
-    url = request.args.get('url')
-    if not url:
-        return jsonify({'error': 'Missing url parameter'}), 400
     try:
-        with YoutubeDL(get_ydl_opts()) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return jsonify({
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            data = {
                 'id': info.get('id'),
                 'title': info.get('title'),
                 'description': info.get('description'),
@@ -35,6 +35,7 @@ def get_video_info():
                 'duration': info.get('duration'),
                 'view_count': info.get('view_count'),
                 'like_count': info.get('like_count'),
+                'channel_url': info.get('channel_url'),
                 'formats': [
                     {
                         'format_id': f.get('format_id'),
@@ -47,9 +48,10 @@ def get_video_info():
                         'height': f.get('height'),
                         'width': f.get('width'),
                         'fps': f.get('fps'),
-                    } for f in info.get('formats', [])
+                    } for f in info.get('formats', []) if f.get('url')
                 ]
-            })
+            }
+            return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -110,52 +112,68 @@ def get_channel():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/suggestions')
+@app.route('/suggestions', methods=['GET'])
 def get_suggestions():
     video_url = request.args.get('url')
     if not video_url:
         return jsonify({'error': 'Missing url parameter'}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'forcejson': True,
+        'no_warnings': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
+    }
+
     try:
-        with YoutubeDL(get_ydl_opts(flat=True)) as ydl:
-            info = ydl.extract_info(video_url, download=False)
-            suggestions = info.get('entries') or []
-            return jsonify({
-                'suggestions': [
-                    {
-                        'id': v.get('id'),
-                        'title': v.get('title'),
-                        'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                        'thumbnail': v.get('thumbnail')
-                    } for v in suggestions if v.get('id')
-                ]
-            })
+        with YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(video_url, download=False)
+            related = result.get('related_videos', [])
+            return jsonify([
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
+                    'thumbnail': v.get('thumbnail')
+                } for v in related if v.get('id')
+            ])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/search')
-def search_youtube():
-    query = request.args.get('query')
+@app.route('/search', methods=['GET'])
+def search_videos():
+    query = request.args.get('q')
     if not query:
-        return jsonify({'error': 'Missing query parameter'}), 400
+        return jsonify({'error': 'Missing q parameter'}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'forcejson': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH,
+        'default_search': 'ytsearch20'
+    }
+
     try:
-        with YoutubeDL(get_ydl_opts(flat=True)) as ydl:
-            result = ydl.extract_info(f"ytsearch5:{query}", download=False)
-            return jsonify({
-                'results': [
-                    {
-                        'id': v.get('id'),
-                        'title': v.get('title'),
-                        'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                        'thumbnail': v.get('thumbnail')
-                    } for v in result.get('entries', []) if v.get('id')
-                ]
-            })
+        with YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(query, download=False)
+            videos = result.get('entries', [])
+            return jsonify([
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
+                    'thumbnail': v.get('thumbnail')
+                } for v in videos if v.get('id')
+            ])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/home')
-def home():
-    return jsonify([
+@app.route('/home', methods=['GET'])
+def get_home_videos():
+    videos = [
         {
             "id": "1",
             "title": "Lo-fi Chill Mix",
@@ -168,7 +186,25 @@ def home():
             "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
             "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         }
-    ])
+    ]
+    return jsonify(videos)
+
+# @app.route('/home')
+# def home():
+#     return jsonify([
+#         {
+#             "id": "1",
+#             "title": "Lo-fi Chill Mix",
+#             "thumbnail": "https://i.ytimg.com/vi/1fueZCTYkpA/hqdefault.jpg",
+#             "url": "https://www.youtube.com/watch?v=1fueZCTYkpA"
+#         },
+#         {
+#             "id": "2",
+#             "title": "Rick Astley - Never Gonna Give You Up",
+#             "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+#             "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+#         }
+#     ])
 
 @app.route('/trending')
 def trending():
