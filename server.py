@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify
 from yt_dlp import YoutubeDL
+import os
 
 app = Flask(__name__)
+
+COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
 @app.route('/', methods=['GET'])
 def root():
@@ -19,6 +22,7 @@ def get_video_info():
         'no_warnings': True,
         'forcejson': True,
         'format': 'best',
+        'cookiefile': COOKIES_PATH
     }
 
     try:
@@ -66,7 +70,8 @@ def get_playlist_videos():
         'quiet': True,
         'extract_flat': True,
         'forcejson': True,
-        'skip_download': True
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
     }
 
     try:
@@ -106,7 +111,8 @@ def get_channel_videos():
         'quiet': True,
         'extract_flat': True,
         'forcejson': True,
-        'skip_download': True
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
     }
 
     try:
