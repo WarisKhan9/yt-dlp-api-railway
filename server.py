@@ -4,8 +4,8 @@ from yt_dlp import YoutubeDL
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
-def home():
-    return '✅ YouTube DL API is running with cookies!'
+def root():
+    return '✅ YouTube DL API is running!'
 
 @app.route('/info', methods=['GET'])
 def get_video_info():
@@ -19,7 +19,6 @@ def get_video_info():
         'no_warnings': True,
         'forcejson': True,
         'format': 'best',
-        'cookiefile': 'cookies.txt'  # ✅ tells yt-dlp to use YouTube cookies
     }
 
     try:
@@ -51,6 +50,36 @@ def get_video_info():
             return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/home', methods=['GET'])
+def get_home_videos():
+    videos = [
+        {
+            "id": "1",
+            "title": "Lo-fi Chill Mix",
+            "thumbnail": "https://i.ytimg.com/vi/1fueZCTYkpA/hqdefault.jpg",
+            "url": "https://www.youtube.com/watch?v=1fueZCTYkpA"
+        },
+        {
+            "id": "2",
+            "title": "Rick Astley - Never Gonna Give You Up",
+            "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        }
+    ]
+    return jsonify(videos)
+
+@app.route('/trending', methods=['GET'])
+def get_trending_videos():
+    videos = [
+        {
+            "id": "3",
+            "title": "Trending Now - Music",
+            "thumbnail": "https://i.ytimg.com/vi/M7FIvfx5J10/hqdefault.jpg",
+            "url": "https://www.youtube.com/watch?v=M7FIvfx5J10"
+        }
+    ]
+    return jsonify(videos)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
