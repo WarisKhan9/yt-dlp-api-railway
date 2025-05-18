@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def home():
-    return '✅ YouTube DL API is running!'
+    return '✅ YouTube DL API is running with cookies!'
 
 @app.route('/info', methods=['GET'])
 def get_video_info():
@@ -19,6 +19,7 @@ def get_video_info():
         'no_warnings': True,
         'forcejson': True,
         'format': 'best',
+        'cookiefile': 'cookies.txt'  # ✅ tells yt-dlp to use YouTube cookies
     }
 
     try:
