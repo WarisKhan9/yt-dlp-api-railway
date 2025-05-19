@@ -10,8 +10,10 @@ def extract_info(url, opts):
         return ydl.extract_info(url, download=False)
 
 @app.route('/')
-def root():
-    return '✅ YouTube DL API is running!'
+def meta_test():
+    return "✅ /meta is reachable"
+# def root():
+    # return '✅ YouTube DL API is running!'
 
 @app.route('/info')
 def get_video_info():
@@ -60,7 +62,6 @@ def get_video_info():
 @app.route('/meta', methods=['GET'])
 def get_meta():
     url = request.args.get('url')
-    app.logger.debug(f"Received URL: {url}")
     if not url:
         return jsonify({'error': 'Missing url parameter'}), 400
 
@@ -69,8 +70,8 @@ def get_meta():
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-        'cookiefile': COOKIES_PATH,
         'format': 'bestaudio/best',
+        'cookiefile': COOKIES_PATH,
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'web']
