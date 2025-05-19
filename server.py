@@ -10,10 +10,9 @@ def extract_info(url, opts):
         return ydl.extract_info(url, download=False)
 
 @app.route('/')
-def meta_test():
-    return '✅ /meta is reachable'
-# def root():
-    # return '✅ YouTube DL API is running!'
+
+def root():
+    return '✅ YouTube DL API is running!'
 
 @app.route('/info')
 def get_video_info():
