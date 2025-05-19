@@ -265,23 +265,28 @@ def get_video_metadata():
 
 
 
-@app.route('/home', methods=['GET'])
+@app.route('/home')
 def get_home_videos():
-    videos = [
-        {
-            "id": "1",
-            "title": "Lo-fi Chill Mix",
-            "thumbnail": "https://i.ytimg.com/vi/1fueZCTYkpA/hqdefault.jpg",
-            "url": "https://www.youtube.com/watch?v=1fueZCTYkpA"
-        },
-        {
-            "id": "2",
-            "title": "Rick Astley - Never Gonna Give You Up",
-            "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        }
-    ]
-    return jsonify(videos)
+    channel_url = "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
+    }
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(channel_url, download=False)
+            return jsonify([
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
+                } for v in result.get('entries', []) if v.get('id')
+            ])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # @app.route('/home')
 # def home():
