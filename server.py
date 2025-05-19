@@ -3,60 +3,106 @@ from yt_dlp import YoutubeDL
 import os
 
 app = Flask(__name__)
-COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+# COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
 def extract_info(url, opts):
     with YoutubeDL(opts) as ydl:
         return ydl.extract_info(url, download=False)
 
 @app.route('/')
-
 def root():
     return '✅ YouTube DL API is running!'
 
-@app.route('/info')
+
+@app.route('/info', methods=['GET'])
 def get_video_info():
-    url = request.args.get('url')
-    if not url:
+    video_url = request.args.get('url')
+    if not video_url:
         return jsonify({'error': 'Missing url parameter'}), 400
 
-    opts = {
+    ydl_opts = {
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
         'format': 'best',
-        'cookiefile': COOKIES_PATH
     }
 
     try:
-        info = extract_info(url, opts)
-        return jsonify({
-            'id': info.get('id'),
-            'title': info.get('title'),
-            'description': info.get('description'),
-            'thumbnail': info.get('thumbnail'),
-            'duration': info.get('duration'),
-            'view_count': info.get('view_count'),
-            'like_count': info.get('like_count'),
-            'channel_url': info.get('channel_url'),
-            'formats': [
-                {
-                    'format_id': f.get('format_id'),
-                    'ext': f.get('ext'),
-                    'acodec': f.get('acodec'),
-                    'vcodec': f.get('vcodec'),
-                    'url': f.get('url'),
-                    'filesize': f.get('filesize'),
-                    'tbr': f.get('tbr'),
-                    'height': f.get('height'),
-                    'width': f.get('width'),
-                    'fps': f.get('fps'),
-                } for f in info.get('formats', []) if f.get('url')
-            ]
-        })
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            data = {
+                'id': info.get('id'),
+                'title': info.get('title'),
+                'description': info.get('description'),
+                'thumbnail': info.get('thumbnail'),
+                'duration': info.get('duration'),
+                'view_count': info.get('view_count'),
+                'like_count': info.get('like_count'),
+                'uploader': info.get('uploader'),
+                'channel_url': info.get('channel_url'),
+                'formats': [
+                    {
+                        'format_id': f.get('format_id'),
+                        'ext': f.get('ext'),
+                        'acodec': f.get('acodec'),
+                        'vcodec': f.get('vcodec'),
+                        'url': f.get('url'),
+                        'filesize': f.get('filesize'),
+                        'tbr': f.get('tbr'),
+                        'height': f.get('height'),
+                        'width': f.get('width'),
+                        'fps': f.get('fps'),
+                    } for f in info.get('formats', [])
+                ]
+            }
+            return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# @app.route('/info')
+# def get_video_info():
+#     url = request.args.get('url')
+#     if not url:
+#         return jsonify({'error': 'Missing url parameter'}), 400
+
+#     opts = {
+#         'quiet': True,
+#         'skip_download': True,
+#         'no_warnings': True,
+#         'forcejson': True,
+#         'format': 'best',
+#         'cookiefile': COOKIES_PATH
+#     }
+
+#     try:
+#         info = extract_info(url, opts)
+#         return jsonify({
+#             'id': info.get('id'),
+#             'title': info.get('title'),
+#             'description': info.get('description'),
+#             'thumbnail': info.get('thumbnail'),
+#             'duration': info.get('duration'),
+#             'view_count': info.get('view_count'),
+#             'like_count': info.get('like_count'),
+#             'channel_url': info.get('channel_url'),
+#             'formats': [
+#                 {
+#                     'format_id': f.get('format_id'),
+#                     'ext': f.get('ext'),
+#                     'acodec': f.get('acodec'),
+#                     'vcodec': f.get('vcodec'),
+#                     'url': f.get('url'),
+#                     'filesize': f.get('filesize'),
+#                     'tbr': f.get('tbr'),
+#                     'height': f.get('height'),
+#                     'width': f.get('width'),
+#                     'fps': f.get('fps'),
+#                 } for f in info.get('formats', []) if f.get('url')
+#             ]
+#         })
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 
 
