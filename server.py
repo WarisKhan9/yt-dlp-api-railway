@@ -118,7 +118,7 @@ def get_meta():
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-        'cookiefile': COOKIES_PATH,
+        # 'cookiefile': COOKIES_PATH,
         'format': 'bestaudio/best',
         'extract_flat': False,  # We want full info, not flat list
         'noplaylist': True,     # Prevent playlist fetching
