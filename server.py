@@ -155,9 +155,9 @@ def search_videos():
         'skip_download': True,
         'no_warnings': True,
         'cookiefile': COOKIES_PATH,
-        'default_search': 'ytsearch50',  # Get 50 results
+        'default_search': 'ytsearch50',
         'forcejson': True,
-        'extract_flat': False  # We want full metadata per video
+        'extract_flat': False  # ❌ REMOVE or SET to False to get full metadata
     }
 
     try:
@@ -179,6 +179,7 @@ def search_videos():
             ])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 
 # @app.route('/search', methods=['GET'])
