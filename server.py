@@ -9,7 +9,7 @@ def extract_info(url, opts):
     with YoutubeDL(opts) as ydl:
         return ydl.extract_info(url, download=False)
 
-@app.route('/')
+@app.route('/',methods=['GET'])
 def root():
     return '✅ YouTube DL API is running!'
 
