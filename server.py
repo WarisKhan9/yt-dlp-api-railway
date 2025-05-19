@@ -3,11 +3,11 @@ from yt_dlp import YoutubeDL
 import os
 
 app = Flask(__name__)
-COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+#COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
-# def extract_info(url, opts):
-#     with YoutubeDL(opts) as ydl:
-#         return ydl.extract_info(url, download=False)
+def extract_info(url, opts):
+    with YoutubeDL(opts) as ydl:
+        return ydl.extract_info(url, download=False)
 
 @app.route('/')
 def root():
@@ -314,8 +314,27 @@ def search():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/home')
-def home():
-    return get_channel_videos("https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ")
+def get_home_videos():
+    channel_url = "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
+    }
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(channel_url, download=False)
+            return jsonify([
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
+                } for v in result.get('entries', []) if v.get('id')
+            ])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/trending')
 def trending():
