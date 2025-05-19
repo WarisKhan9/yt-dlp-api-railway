@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
-def extract_info(url, opts):
+def extract_info(url, opts ,methods=['GET']):
     with YoutubeDL(opts) as ydl:
         return ydl.extract_info(url, download=False)
 
