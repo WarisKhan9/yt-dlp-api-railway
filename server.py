@@ -3,7 +3,7 @@ from yt_dlp import YoutubeDL
 import os
 
 app = Flask(__name__)
-#COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
 def extract_info(url, opts):
     with YoutubeDL(opts) as ydl:
