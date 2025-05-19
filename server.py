@@ -120,24 +120,27 @@ def get_suggestions():
 
     ydl_opts = {
         'quiet': True,
-        'forcejson': True,
-        'no_warnings': True,
         'skip_download': True,
-        'cookiefile': COOKIES_PATH
+        'no_warnings': True,
+        'forcejson': True,
+        'cookiefile': COOKIES_PATH,
+        'extract_flat': 'in_playlist',
     }
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(video_url, download=False)
-            related = result.get('related_videos', [])
-            return jsonify([
+            info = ydl.extract_info(video_url, download=False)
+            entries = info.get('related_videos', [])
+            suggestions = [
                 {
                     'id': v.get('id'),
                     'title': v.get('title'),
                     'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                    'thumbnail': v.get('thumbnail')
-                } for v in related if v.get('id')
-            ])
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
+                }
+                for v in entries if v.get('id')
+            ]
+            return jsonify({'suggestions': suggestions})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -149,11 +152,12 @@ def search_videos():
 
     ydl_opts = {
         'quiet': True,
-        'extract_flat': True,
-        'forcejson': True,
         'skip_download': True,
+        'no_warnings': True,
         'cookiefile': COOKIES_PATH,
-        'default_search': 'ytsearch20'
+        'default_search': 'ytsearch50',  # Get 50 results
+        'forcejson': True,
+        'extract_flat': False  # We want full metadata per video
     }
 
     try:
@@ -165,11 +169,48 @@ def search_videos():
                     'id': v.get('id'),
                     'title': v.get('title'),
                     'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                    'thumbnail': v.get('thumbnail')
+                    'thumbnail': v.get('thumbnail'),
+                    'uploader': v.get('uploader'),
+                    'view_count': v.get('view_count'),
+                    'like_count': v.get('like_count'),
+                    'duration': v.get('duration'),
+                    'channel_url': v.get('channel_url')
                 } for v in videos if v.get('id')
             ])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# @app.route('/search', methods=['GET'])
+# def search_videos():
+#     query = request.args.get('q')
+#     if not query:
+#         return jsonify({'error': 'Missing q parameter'}), 400
+
+#     ydl_opts = {
+#         'quiet': True,
+#         'extract_flat': True,
+#         'forcejson': True,
+#         'skip_download': True,
+#         'cookiefile': COOKIES_PATH,
+#         'default_search': 'ytsearch20'
+#     }
+
+#     try:
+#         with YoutubeDL(ydl_opts) as ydl:
+#             result = ydl.extract_info(query, download=False)
+#             videos = result.get('entries', [])
+#             return jsonify([
+#                 {
+#                     'id': v.get('id'),
+#                     'title': v.get('title'),
+#                     'url': f"https://www.youtube.com/watch?v={v.get('id')}",
+#                     'thumbnail': v.get('thumbnail')
+#                     'uploader': v.get('uploader')
+#                 } for v in videos if v.get('id')
+#             ])
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 @app.route('/home', methods=['GET'])
 def get_home_videos():
