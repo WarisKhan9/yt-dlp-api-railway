@@ -245,23 +245,24 @@ def get_video_metadata():
         'skip_download': True,
         'forcejson': True,
         'cookiefile': COOKIES_PATH,
-        'format': 'bestaudio/best'  # Only for lightest fetch
+        'format': 'bestaudio/best'
     }
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
-            data = {
+            return jsonify({
                 'id': info.get('id'),
                 'title': info.get('title'),
                 'uploader': info.get('uploader'),
                 'view_count': info.get('view_count'),
                 'like_count': info.get('like_count'),
                 'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
-            }
-            return jsonify(data)
+            })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
 
 
 
@@ -306,15 +307,28 @@ def get_home_videos():
 #     ])
 
 @app.route('/trending')
-def trending():
-    return jsonify([
-        {
-            "id": "3",
-            "title": "Trending Now - Music",
-            "thumbnail": "https://i.ytimg.com/vi/M7FIvfx5J10/hqdefault.jpg",
-            "url": "https://www.youtube.com/watch?v=M7FIvfx5J10"
-        }
-    ])
+def get_trending():
+    playlist_url = "https://www.youtube.com/playlist?list=PLFgquLnL59akA2PflFpeQG9L01VFg90wS"  # Trending Music
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
+    }
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(playlist_url, download=False)
+            return jsonify([
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
+                } for v in result.get('entries', []) if v.get('id')
+            ])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
