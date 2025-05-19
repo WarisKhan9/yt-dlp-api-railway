@@ -11,7 +11,7 @@ def extract_info(url, opts):
 
 @app.route('/')
 def meta_test():
-    return "✅ /meta is reachable"
+    return '✅ /meta is reachable'
 # def root():
     # return '✅ YouTube DL API is running!'
 
