@@ -3,13 +3,13 @@ from yt_dlp import YoutubeDL
 import os
 
 app = Flask(__name__)
-COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+# COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
-def extract_info(url, opts ,methods=['GET']):
+def extract_info(url, opts):
     with YoutubeDL(opts) as ydl:
         return ydl.extract_info(url, download=False)
 
-@app.route('/',methods=['GET'])
+@app.route('/')
 def root():
     return '✅ YouTube DL API is running!'
 
@@ -118,7 +118,7 @@ def get_meta():
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-        # 'cookiefile': COOKIES_PATH,
+        'cookiefile': COOKIES_PATH,
         'format': 'bestaudio/best',
         'extract_flat': False,  # We want full info, not flat list
         'noplaylist': True,     # Prevent playlist fetching
@@ -192,7 +192,7 @@ def get_playlist():
         'quiet': True,
         'skip_download': True,
         'extract_flat': True,
-        #'cookiefile': COOKIES_PATH
+        'cookiefile': COOKIES_PATH
     }
 
     try:
@@ -259,7 +259,7 @@ def get_suggestions():
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-       # 'cookiefile': COOKIES_PATH,
+        'cookiefile': COOKIES_PATH,
         'extract_flat': 'in_playlist'
     }
 
@@ -289,7 +289,7 @@ def search():
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
-       # 'cookiefile': COOKIES_PATH,
+        'cookiefile': COOKIES_PATH,
         'default_search': 'ytsearch50',
         'forcejson': True,
         'extract_flat': False
@@ -314,27 +314,8 @@ def search():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/home')
-def get_home_videos():
-    channel_url = "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"
-    ydl_opts = {
-        'quiet': True,
-        'extract_flat': True,
-        'skip_download': True,
-        'cookiefile': COOKIES_PATH
-    }
-    try:
-        with YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(channel_url, download=False)
-            return jsonify([
-                {
-                    'id': v.get('id'),
-                    'title': v.get('title'),
-                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
-                } for v in result.get('entries', []) if v.get('id')
-            ])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def home():
+    return get_channel_videos("https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ")
 
 @app.route('/trending')
 def trending():
@@ -346,7 +327,7 @@ def get_channel_videos(url):
         'quiet': True,
         'skip_download': True,
         'extract_flat': True,
-        #'cookiefile': COOKIES_PATH
+        'cookiefile': COOKIES_PATH
     }
     try:
         info = extract_info(url, opts)
@@ -366,7 +347,7 @@ def get_playlist_videos(url):
         'quiet': True,
         'skip_download': True,
         'extract_flat': True,
-        #'cookiefile': COOKIES_PATH
+        'cookiefile': COOKIES_PATH
     }
     try:
         info = extract_info(url, opts)
