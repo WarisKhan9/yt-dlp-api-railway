@@ -60,6 +60,7 @@ def get_video_info():
 @app.route('/meta')
 def get_meta():
     url = request.args.get('url')
+    app.logger.debug(f"Received URL: {url}")
     if not url:
         return jsonify({'error': 'Missing url parameter'}), 400
 
@@ -69,8 +70,14 @@ def get_meta():
         'no_warnings': True,
         'forcejson': True,
         'cookiefile': COOKIES_PATH,
-        'format': 'bestaudio/best'
+        'format': 'bestaudio/best',
+        'extractor_args': {
+        'youtube': {
+            'player_client': ['android', 'web']
+        }
     }
+    }
+
 
     try:
         info = extract_info(url, opts)
