@@ -63,6 +63,16 @@ def get_playlist():
         playlist_url = f"https://www.youtube.com/playlist?list={playlist_id}"
     if not playlist_url:
         return jsonify({'error': 'Missing url or id parameter'}), 400
+    
+    
+    ydl_opts = {
+    'quiet': True,
+    'skip_download': True,
+    'extract_flat': True,
+    'cookiefile': COOKIES_PATH
+    
+    }
+    
     try:
         with YoutubeDL(get_ydl_opts(flat=True)) as ydl:
             result = ydl.extract_info(playlist_url, download=False)
@@ -93,6 +103,15 @@ def get_channel():
     if not channel_url:
         return jsonify({'error': 'Missing url or id parameter'}), 400
     try:
+
+ydl_opts = {
+      'quiet': True,
+      'skip_download': True,
+     'extract_flat': True,
+               'cookiefile': COOKIES_PATH
+               }
+with YoutubeDL(ydl_opts) as ydl:
+
         with YoutubeDL(get_ydl_opts(flat=True)) as ydl:
             result = ydl.extract_info(channel_url, download=False)
             return jsonify({
@@ -212,6 +231,39 @@ def search_videos():
 #             ])
 #     except Exception as e:
 #         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/meta', methods=['GET'])
+def get_video_metadata():
+    video_url = request.args.get('url')
+    if not video_url:
+        return jsonify({'error': 'Missing url parameter'}), 400
+
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+        'forcejson': True,
+        'cookiefile': COOKIES_PATH,
+        'format': 'bestaudio/best'  # Only for lightest fetch
+    }
+
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            data = {
+                'id': info.get('id'),
+                'title': info.get('title'),
+                'uploader': info.get('uploader'),
+                'view_count': info.get('view_count'),
+                'like_count': info.get('like_count'),
+                'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+            }
+            return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/home', methods=['GET'])
 def get_home_videos():
