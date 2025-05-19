@@ -59,39 +59,82 @@ def get_video_info():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+
 @app.route('/meta', methods=['GET'])
 def get_meta():
     url = request.args.get('url')
     if not url:
         return jsonify({'error': 'Missing url parameter'}), 400
 
+    # Use similar options as /info but lighter: no formats, only basic info
     opts = {
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-        'format': 'bestaudio/best',
         'cookiefile': COOKIES_PATH,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'web']
-            }
-        }
+        'format': 'bestaudio/best',
+        'extract_flat': False,  # We want full info, not flat list
+        'noplaylist': True,     # Prevent playlist fetching
+        'youtube_include_dash_manifest': False,  # Speed up extract
+        'ignoreerrors': True
     }
 
     try:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
+
+            # Defensive fallback for thumbnail
+            thumbnail = info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+
             return jsonify({
                 'id': info.get('id'),
                 'title': info.get('title'),
                 'uploader': info.get('uploader'),
                 'view_count': info.get('view_count'),
                 'like_count': info.get('like_count'),
-                'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+                'thumbnail': thumbnail,
+                'duration': info.get('duration'),
+                'channel_url': info.get('channel_url')
             })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# @app.route('/meta', methods=['GET'])
+# def get_meta():
+#     url = request.args.get('url')
+#     if not url:
+#         return jsonify({'error': 'Missing url parameter'}), 400
+
+#     opts = {
+#         'quiet': True,
+#         'skip_download': True,
+#         'no_warnings': True,
+#         'forcejson': True,
+#         'format': 'bestaudio/best',
+#         'cookiefile': COOKIES_PATH,
+#         'extractor_args': {
+#             'youtube': {
+#                 'player_client': ['android', 'web']
+#             }
+#         }
+#     }
+
+#     try:
+#         with YoutubeDL(opts) as ydl:
+#             info = ydl.extract_info(url, download=False)
+#             return jsonify({
+#                 'id': info.get('id'),
+#                 'title': info.get('title'),
+#                 'uploader': info.get('uploader'),
+#                 'view_count': info.get('view_count'),
+#                 'like_count': info.get('like_count'),
+#                 'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+#             })
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 @app.route('/playlist')
 def get_playlist():
