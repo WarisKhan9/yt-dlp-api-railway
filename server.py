@@ -57,7 +57,7 @@ def get_video_info():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/meta')
+@app.route('/meta', methods=['GET'])
 def get_meta():
     url = request.args.get('url')
     app.logger.debug(f"Received URL: {url}")
@@ -72,23 +72,23 @@ def get_meta():
         'cookiefile': COOKIES_PATH,
         'format': 'bestaudio/best',
         'extractor_args': {
-        'youtube': {
-            'player_client': ['android', 'web']
+            'youtube': {
+                'player_client': ['android', 'web']
+            }
         }
     }
-    }
-
 
     try:
-        info = extract_info(url, opts)
-        return jsonify({
-            'id': info.get('id'),
-            'title': info.get('title'),
-            'uploader': info.get('uploader'),
-            'view_count': info.get('view_count'),
-            'like_count': info.get('like_count'),
-            'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
-        })
+        with YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return jsonify({
+                'id': info.get('id'),
+                'title': info.get('title'),
+                'uploader': info.get('uploader'),
+                'view_count': info.get('view_count'),
+                'like_count': info.get('like_count'),
+                'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+            })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
