@@ -104,9 +104,9 @@ def search():
     ydl_opts = {
         'quiet': True,
         'skip_download': True,
-        'extract_flat': True,
+        # 'extract_flat': True,
         'forcejson': True,
-        # 'cookiefile': COOKIES_PATH,
+         'cookiefile': COOKIES_PATH,
         'default_search': 'ytsearch20',
     }
 
