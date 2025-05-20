@@ -294,8 +294,29 @@ def search_videos():
 #         return jsonify({'error': str(e)}), 500
 
 @app.route('/home')
-def home():
-    return get_channel_videos("https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ")
+def get_home():
+    url = "https://www.youtube.com/feed/explore"
+    opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
+    }
+
+    try:
+        info = extract_info(url, opts)
+        return jsonify({
+            'videos': [
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}"
+                } for v in info.get('entries', []) if v.get('id')
+            ]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/trending')
 def trending():
