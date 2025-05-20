@@ -201,37 +201,29 @@ def get_suggestions():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/search')
-def search():
+@app.route('/search', methods=['GET'])
+def search_videos():
     query = request.args.get('q')
     if not query:
         return jsonify({'error': 'Missing q parameter'}), 400
 
-    opts = {
+    ydl_opts = {
         'quiet': True,
         'skip_download': True,
-        'no_warnings': True,
-        'cookiefile': COOKIES_PATH,
-        'default_search': 'ytsearch50',
+        'extract_flat': True,
         'forcejson': True,
-        'extract_flat': False
     }
 
     try:
-        info = extract_info(query, opts)
-        return jsonify([
-            {
-                'id': v.get('id'),
-                'title': v.get('title'),
-                'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                'thumbnail': v.get('thumbnail'),
-                'uploader': v.get('uploader'),
-                'view_count': v.get('view_count'),
-                'like_count': v.get('like_count'),
-                'duration': v.get('duration'),
-                'channel_url': v.get('channel_url')
-            } for v in info.get('entries', []) if v.get('id')
-        ])
+        with YoutubeDL(ydl_opts) as ydl:
+            search_result = ydl.extract_info(f"ytsearch10:{query}", download=False)
+            videos = [{
+                'id': e.get('id'),
+                'title': e.get('title'),
+                'url': e.get('url'),
+                'thumbnail': e.get('thumbnail'),
+            } for e in search_result.get('entries', [])]
+            return jsonify(videos)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
