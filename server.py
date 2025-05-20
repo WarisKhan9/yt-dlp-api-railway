@@ -95,13 +95,16 @@ def get_meta():
         return jsonify({'error': str(e)}), 500
 
 
+
+
+
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('q')
     if not query:
         return jsonify({'error': 'Missing q parameter'}), 400
 
-    ydl_opts = {
+    base_opts = {
         'quiet': True,
         'skip_download': True,
         'extract_flat': True,
@@ -109,46 +112,76 @@ def search():
         'cookiefile': COOKIES_PATH,
     }
 
+    full_info_opts = {
+        'quiet': True,
+        'skip_download': True,
+        'forcejson': True,
+        'cookiefile': COOKIES_PATH,
+    }
+
     try:
-        # Use ytsearch format directly for full compatibility
-        with YoutubeDL(ydl_opts) as ydl:
-            search_result = ydl.extract_info(f"ytsearch20:{query}", download=False)
+        with YoutubeDL(base_opts) as ydl:
+            search_result = ydl.extract_info(f"ytsearch10:{query}", download=False)
 
-            results = []
-            for entry in search_result.get('entries', []):
-                if not entry or not entry.get('id'):
-                    continue
+        results = []
+        for entry in search_result.get('entries', []):
+            if not entry or not entry.get('id'):
+                continue
 
-                _type = entry.get('_type') or 'video'
-                url = ''
-                
-                # Detect type: playlist, channel, or video
-                if _type == 'playlist':
-                    url = f"https://www.youtube.com/playlist?list={entry['id']}"
-                elif _type == 'url' and 'channel' in entry.get('url', ''):
-                    _type = 'channel'
-                    url = entry.get('url')
-                else:
-                    _type = 'video'
-                    url = f"https://www.youtube.com/watch?v={entry['id']}"
+            _type = entry.get('_type') or 'video'
+            url = ''
+            if _type == 'playlist':
+                url = f"https://www.youtube.com/playlist?list={entry['id']}"
+            elif _type == 'url' and 'channel' in entry.get('url', ''):
+                _type = 'channel'
+                url = entry.get('url')
+            else:
+                _type = 'video'
+                url = f"https://www.youtube.com/watch?v={entry['id']}"
 
-                # Thumbnail fallback for videos
-                thumbnail = entry.get('thumbnail')
-                if not thumbnail and _type == 'video':
-                    thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
+            thumbnail = entry.get('thumbnail') or (
+                f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg" if _type == 'video' else ''
+            )
 
-                results.append({
-                    'id': entry['id'],
-                    'title': entry.get('title'),
-                    'url': url,
-                    'type': _type,
-                    'thumbnail': thumbnail,
-                })
+            # Initialize extra metadata
+            uploader = None
+            view_count = None
+            like_count = None
+            duration = None
 
-            return jsonify({'results': results})
+            # If it's a video, fetch full metadata
+            if _type == 'video':
+                try:
+                    with YoutubeDL(full_info_opts) as ydl_full:
+                        info = ydl_full.extract_info(url, download=False)
+                        uploader = info.get('uploader')
+                        view_count = info.get('view_count')
+                        like_count = info.get('like_count')
+                        duration = info.get('duration')
+                except Exception as e:
+                    pass  # Safe fail – partial data is still OK
+
+            results.append({
+                'id': entry['id'],
+                'title': entry.get('title'),
+                'url': url,
+                'type': _type,
+                'thumbnail': thumbnail,
+                'uploader': uploader,
+                'views': view_count,
+                'likes': like_count,
+                'duration': duration,
+            })
+
+        return jsonify({'results': results})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+
+
+
 
 
 # @app.route('/search', methods=['GET'])
@@ -160,44 +193,52 @@ def search():
 #     ydl_opts = {
 #         'quiet': True,
 #         'skip_download': True,
-#          'extract_flat': True,
+#         'extract_flat': True,
 #         'forcejson': True,
-#          'cookiefile': COOKIES_PATH,
-#         'default_search': 'ytsearch20',
+#         'cookiefile': COOKIES_PATH,
 #     }
 
 #     try:
+#         # Use ytsearch format directly for full compatibility
 #         with YoutubeDL(ydl_opts) as ydl:
-#             info = ydl.extract_info(query, download=False)
-#             results = []
+#             search_result = ydl.extract_info(f"ytsearch20:{query}", download=False)
 
-#             for entry in info.get('entries', []):
+#             results = []
+#             for entry in search_result.get('entries', []):
 #                 if not entry or not entry.get('id'):
 #                     continue
 
-#                 result_type = entry.get('_type', 'video')
-
-#                 if result_type == 'playlist':
-#                     result_type = 'playlist'
-#                     url = f"https://www.youtube.com/playlist?list={entry.get('id')}"
-#                 elif result_type == 'url' and 'channel' in entry.get('url', ''):
-#                     result_type = 'channel'
+#                 _type = entry.get('_type') or 'video'
+#                 url = ''
+                
+#                 # Detect type: playlist, channel, or video
+#                 if _type == 'playlist':
+#                     url = f"https://www.youtube.com/playlist?list={entry['id']}"
+#                 elif _type == 'url' and 'channel' in entry.get('url', ''):
+#                     _type = 'channel'
 #                     url = entry.get('url')
 #                 else:
-#                     result_type = 'video'
-#                     url = f"https://www.youtube.com/watch?v={entry.get('id')}"
+#                     _type = 'video'
+#                     url = f"https://www.youtube.com/watch?v={entry['id']}"
+
+#                 # Thumbnail fallback for videos
+#                 thumbnail = entry.get('thumbnail')
+#                 if not thumbnail and _type == 'video':
+#                     thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
 
 #                 results.append({
-#                     'id': entry.get('id'),
+#                     'id': entry['id'],
 #                     'title': entry.get('title'),
-#                     'thumbnail': entry.get('thumbnails', [{}])[0].get('url') if entry.get('thumbnails') else f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg",
 #                     'url': url,
-#                     'type': result_type
+#                     'type': _type,
+#                     'thumbnail': thumbnail,
 #                 })
 
 #             return jsonify({'results': results})
+
 #     except Exception as e:
 #         return jsonify({'error': str(e)}), 500
+
 
 
 
