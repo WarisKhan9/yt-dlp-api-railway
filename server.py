@@ -60,51 +60,6 @@ def get_video_info():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# @app.route('/info')
-# def get_video_info():
-#     url = request.args.get('url')
-#     if not url:
-#         return jsonify({'error': 'Missing url parameter'}), 400
-
-#     opts = {
-#         'quiet': True,
-#         'skip_download': True,
-#         'no_warnings': True,
-#         'forcejson': True,
-#         'format': 'best',
-#         'cookiefile': COOKIES_PATH
-#     }
-
-#     try:
-#         info = extract_info(url, opts)
-#         return jsonify({
-#             'id': info.get('id'),
-#             'title': info.get('title'),
-#             'description': info.get('description'),
-#             'thumbnail': info.get('thumbnail'),
-#             'duration': info.get('duration'),
-#             'view_count': info.get('view_count'),
-#             'like_count': info.get('like_count'),
-#             'channel_url': info.get('channel_url'),
-#             'formats': [
-#                 {
-#                     'format_id': f.get('format_id'),
-#                     'ext': f.get('ext'),
-#                     'acodec': f.get('acodec'),
-#                     'vcodec': f.get('vcodec'),
-#                     'url': f.get('url'),
-#                     'filesize': f.get('filesize'),
-#                     'tbr': f.get('tbr'),
-#                     'height': f.get('height'),
-#                     'width': f.get('width'),
-#                     'fps': f.get('fps'),
-#                 } for f in info.get('formats', []) if f.get('url')
-#             ]
-#         })
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-
 
 @app.route('/meta', methods=['GET'])
 def get_meta():
@@ -147,39 +102,6 @@ def get_meta():
         return jsonify({'error': str(e)}), 500
 
 
-# @app.route('/meta', methods=['GET'])
-# def get_meta():
-#     url = request.args.get('url')
-#     if not url:
-#         return jsonify({'error': 'Missing url parameter'}), 400
-
-#     opts = {
-#         'quiet': True,
-#         'skip_download': True,
-#         'no_warnings': True,
-#         'forcejson': True,
-#         'format': 'bestaudio/best',
-#         'cookiefile': COOKIES_PATH,
-#         'extractor_args': {
-#             'youtube': {
-#                 'player_client': ['android', 'web']
-#             }
-#         }
-#     }
-
-#     try:
-#         with YoutubeDL(opts) as ydl:
-#             info = ydl.extract_info(url, download=False)
-#             return jsonify({
-#                 'id': info.get('id'),
-#                 'title': info.get('title'),
-#                 'uploader': info.get('uploader'),
-#                 'view_count': info.get('view_count'),
-#                 'like_count': info.get('like_count'),
-#                 'thumbnail': info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
-#             })
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
 
 @app.route('/playlist')
 def get_playlist():
@@ -289,7 +211,7 @@ def search():
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
-        'cookiefile': COOKIES_PATH,
+       # 'cookiefile': COOKIES_PATH,
         'default_search': 'ytsearch50',
         'forcejson': True,
         'extract_flat': False
