@@ -319,8 +319,29 @@ def get_home():
 
 
 @app.route('/trending')
-def trending():
-    return get_playlist_videos("https://www.youtube.com/playlist?list=PLFgquLnL59akA2PflFpeQG9L01VFg90wS")
+def get_trending():
+    url = "https://www.youtube.com/feed/trending"
+    opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'cookiefile': COOKIES_PATH
+    }
+
+    try:
+        info = extract_info(url, opts)
+        return jsonify({
+            'videos': [
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={v.get('id')}"
+                } for v in info.get('entries', []) if v.get('id')
+            ]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # Internal reuse
 def get_channel_videos(url):
