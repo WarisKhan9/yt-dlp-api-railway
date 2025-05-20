@@ -104,46 +104,45 @@ def search():
     ydl_opts = {
         'quiet': True,
         'skip_download': True,
-        'extract_flat': True,  # important for speed
+        'extract_flat': True,
         'forcejson': True,
         'cookiefile': COOKIES_PATH,
-        'default_search': 'ytsearch20',
     }
 
     try:
+        # Use ytsearch format directly for full compatibility
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(query, download=False)
-            results = []
+            search_result = ydl.extract_info(f"ytsearch20:{query}", download=False)
 
-            for entry in info.get('entries', []):
+            results = []
+            for entry in search_result.get('entries', []):
                 if not entry or not entry.get('id'):
                     continue
 
-                # Determine type
-                _type = entry.get('_type', 'video')
+                _type = entry.get('_type') or 'video'
                 url = ''
+                
+                # Detect type: playlist, channel, or video
                 if _type == 'playlist':
-                    _type = 'playlist'
                     url = f"https://www.youtube.com/playlist?list={entry['id']}"
                 elif _type == 'url' and 'channel' in entry.get('url', ''):
                     _type = 'channel'
-                    url = entry['url']
+                    url = entry.get('url')
                 else:
                     _type = 'video'
                     url = f"https://www.youtube.com/watch?v={entry['id']}"
 
-                # Thumbnail fallback for video type
-                if _type == 'video':
+                # Thumbnail fallback for videos
+                thumbnail = entry.get('thumbnail')
+                if not thumbnail and _type == 'video':
                     thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
-                else:
-                    thumbnail = entry.get('thumbnail', '')
 
                 results.append({
                     'id': entry['id'],
                     'title': entry.get('title'),
                     'url': url,
                     'type': _type,
-                    'thumbnail': thumbnail
+                    'thumbnail': thumbnail,
                 })
 
             return jsonify({'results': results})
