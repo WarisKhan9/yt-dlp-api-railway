@@ -241,11 +241,12 @@ def get_home():
     try:
         info = extract_info(url, opts)
         return jsonify({
+            'source': 'Explore',
             'videos': [
                 {
                     'id': v.get('id'),
                     'title': v.get('title'),
-                    'thumbnail': v.get('thumbnails', [{}])[0].get('url'),#
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url'),
                     'url': f"https://www.youtube.com/watch?v={v.get('id')}"
                 } for v in info.get('entries', []) if v.get('id')
             ]
