@@ -211,7 +211,7 @@ def search():
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
-       # 'cookiefile': COOKIES_PATH,
+        'cookiefile': COOKIES_PATH,
         'default_search': 'ytsearch50',
         'forcejson': True,
         'extract_flat': False
