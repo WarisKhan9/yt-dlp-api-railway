@@ -10,32 +10,6 @@ def extract_info(url, opts):
         return ydl.extract_info(url, download=False)
 
 @app.route('/')
-def root():
-    return '✅ YouTube DL API is running!'
-
-@app.route('/info')
-def get_video_info():
-    url = request.args.get('url')
-    if not url:
-        return jsonify({'error': 'Missing url parameter'}), 400
-
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'no_warnings': True,
-        'forcejson': True,
-        'format': 'best',from flask import Flask, request, jsonify
-from yt_dlp import YoutubeDL
-import os
-
-app = Flask(__name__)
-COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
-
-def extract_info(url, opts):
-    with YoutubeDL(opts) as ydl:
-        return ydl.extract_info(url, download=False)
-
-@app.route('/')
 
 def root():
     return '✅ YouTube DL API is running!'
@@ -83,8 +57,6 @@ def get_video_info():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
 
 @app.route('/meta', methods=['GET'])
 def get_meta():
