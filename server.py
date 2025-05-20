@@ -89,6 +89,7 @@ def get_meta():
                 'uploader': info.get('uploader'),
                 'view_count': info.get('view_count'),
                 'like_count': info.get('like_count'),
+                'upload_date': info.get('upload_date'),
                 'thumbnail': thumbnail,
                 'duration': info.get('duration'),
                 'channel_url': info.get('channel_url')
