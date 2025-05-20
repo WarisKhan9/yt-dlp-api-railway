@@ -241,7 +241,7 @@ def get_home():
     url = "https://www.youtube.com/feed/explore"
     opts = {
         'quiet': True,
-        'extract_flat': True,
+        'extract_flat': False,
         'skip_download': True,
         'cookiefile': COOKIES_PATH
     }
@@ -267,7 +267,7 @@ def get_trending():
     url = "https://www.youtube.com/feed/trending"
     opts = {
         'quiet': True,
-        'extract_flat': True,
+        'extract_flat': False,
         'skip_download': True,
         'cookiefile': COOKIES_PATH
     }
