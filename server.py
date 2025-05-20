@@ -13,8 +13,7 @@ def extract_info(url, opts):
 def root():
     return '✅ YouTube DL API is running!'
 
-
-@app.route('/info', methods=['GET'])
+@app.route('/info')
 def get_video_info():
     video_url = request.args.get('url')
     if not video_url:
@@ -31,7 +30,7 @@ def get_video_info():
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
-            data = {
+            return jsonify({
                 'id': info.get('id'),
                 'title': info.get('title'),
                 'description': info.get('description'),
@@ -55,37 +54,31 @@ def get_video_info():
                         'fps': f.get('fps'),
                     } for f in info.get('formats', [])
                 ]
-            }
-            return jsonify(data)
+            })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-@app.route('/meta', methods=['GET'])
+@app.route('/meta')
 def get_meta():
     url = request.args.get('url')
     if not url:
         return jsonify({'error': 'Missing url parameter'}), 400
 
-    # Use similar options as /info but lighter: no formats, only basic info
     opts = {
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
         'forcejson': True,
-        # 'cookiefile': COOKIES_PATH,
         'format': 'bestaudio/best',
-        'extract_flat': False,  # We want full info, not flat list
-        'noplaylist': True,     # Prevent playlist fetching
-        'youtube_include_dash_manifest': False,  # Speed up extract
+        'extract_flat': False,
+        'noplaylist': True,
+        'youtube_include_dash_manifest': False,
         'ignoreerrors': True
     }
 
     try:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
-
-            # Defensive fallback for thumbnail
             thumbnail = info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
 
             return jsonify({
@@ -100,109 +93,6 @@ def get_meta():
             })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-
-@app.route('/playlist')
-def get_playlist():
-    pid = request.args.get('id')
-    url = request.args.get('url') or (f"https://www.youtube.com/playlist?list={pid}" if pid else None)
-    if not url:
-        return jsonify({'error': 'Missing url or id parameter'}), 400
-
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': True,
-        'cookiefile': COOKIES_PATH
-    }
-
-    try:
-        info = extract_info(url, opts)
-        return jsonify({
-            'playlist': {
-                'title': info.get('title'),
-                'uploader': info.get('uploader'),
-                'url': url,
-                'videos': [
-                    {
-                        'id': v.get('id'),
-                        'title': v.get('title'),
-                        'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                        'thumbnail': v.get('thumbnail')
-                    } for v in info.get('entries', []) if v.get('id')
-                ]
-            }
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/channel')
-def get_channel():
-    cid = request.args.get('id')
-    url = request.args.get('url') or (f"https://www.youtube.com/channel/{cid}" if cid else None)
-    if not url:
-        return jsonify({'error': 'Missing url or id parameter'}), 400
-
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': True,
-        'cookiefile': COOKIES_PATH
-    }
-
-    try:
-        info = extract_info(url, opts)
-        return jsonify({
-            'channel': {
-                'title': info.get('title'),
-                'uploader': info.get('uploader'),
-                'url': url,
-                'videos': [
-                    {
-                        'id': v.get('id'),
-                        'title': v.get('title'),
-                        'url': f"https://www.youtube.com/watch?v={v.get('id')}"
-                    } for v in info.get('entries', []) if v.get('id')
-                ]
-            }
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/suggestions')
-def get_suggestions():
-    url = request.args.get('url')
-    if not url:
-        return jsonify({'error': 'Missing url parameter'}), 400
-
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'no_warnings': True,
-        'forcejson': True,
-        'cookiefile': COOKIES_PATH,
-        'extract_flat': 'in_playlist'
-    }
-
-    try:
-        info = extract_info(url, opts)
-        suggestions = info.get('related_videos', [])
-        return jsonify({
-            'suggestions': [
-                {
-                    'id': v.get('id'),
-                    'title': v.get('title'),
-                    'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
-                } for v in suggestions if v.get('id')
-            ]
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-
 
 @app.route('/search')
 def search():
@@ -247,33 +137,83 @@ def search():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/playlist')
+def get_playlist():
+    pid = request.args.get('id')
+    url = request.args.get('url') or (f"https://www.youtube.com/playlist?list={pid}" if pid else None)
+    if not url:
+        return jsonify({'error': 'Missing url or id parameter'}), 400
 
-# @app.route('/search', methods=['GET'])
-# def search_videos():
-#     query = request.args.get('q')
-#     if not query:
-#         return jsonify({'error': 'Missing q parameter'}), 400
+    opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'cookiefile': COOKIES_PATH
+    }
 
-#     ydl_opts = {
-#         'quiet': True,
-#         'skip_download': True,
-#         'extract_flat': True,
-#         'forcejson': True,
-#     }
+    try:
+        info = extract_info(url, opts)
+        return jsonify({
+            'playlist': {
+                'title': info.get('title'),
+                'uploader': info.get('uploader'),
+                'url': url,
+                'videos': [
+                    {
+                        'id': v.get('id'),
+                        'title': v.get('title'),
+                        'url': f"https://www.youtube.com/watch?v={v.get('id')}"
+                    } for v in info.get('entries', []) if v.get('id')
+                ]
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-#     try:
-#         with YoutubeDL(ydl_opts) as ydl:
-#             search_result = ydl.extract_info(f"ytsearch5:{query}", download=False)
-#             videos = [{
-#                 'id': e.get('id'),
-#                 'title': e.get('title'),
-#                 'url': e.get('url'),
-#                 'thumbnail': e.get('thumbnail'),
-#             } for e in search_result.get('entries', [])]
-#             return jsonify(videos)
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
+@app.route('/channel')
+def get_channel():
+    cid = request.args.get('id')
+    url = request.args.get('url') or (f"https://www.youtube.com/channel/{cid}" if cid else None)
+    if not url:
+        return jsonify({'error': 'Missing url or id parameter'}), 400
 
+    opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'cookiefile': COOKIES_PATH
+    }
+
+    try:
+        info = extract_info(url, opts)
+        videos = []
+        playlists = []
+
+        for entry in info.get('entries', []):
+            if entry.get('_type') == 'url' and 'playlist' in entry.get('url', ''):
+                playlists.append({
+                    'title': entry.get('title'),
+                    'url': entry.get('url')
+                })
+            else:
+                videos.append({
+                    'id': entry.get('id'),
+                    'title': entry.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={entry.get('id')}"
+                })
+
+        return jsonify({
+            'channel': {
+                'name': info.get('title'),
+                'uploader_id': info.get('id'),
+                'icon': info.get('thumbnails', [{}])[0].get('url'),
+                'url': url,
+                'videos': videos,
+                'playlists': playlists
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/home')
 def get_home():
@@ -301,7 +241,6 @@ def get_home():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/trending')
 def get_trending():
     url = "https://www.youtube.com/feed/trending"
@@ -327,79 +266,3 @@ def get_trending():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-# Internal reuse
-def get_channel_videos(url):
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': True,
-        'cookiefile': COOKIES_PATH
-    }
-    try:
-        info = extract_info(url, opts)
-        return jsonify([
-            {
-                'id': v.get('id'),
-                'title': v.get('title'),
-                'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                'thumbnail': v.get('thumbnails', [{}])[0].get('url')
-            } for v in info.get('entries', []) if v.get('id')
-        ])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-def get_playlist_videos(url):
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': True,
-        'cookiefile': COOKIES_PATH
-    }
-    try:
-        info = extract_info(url, opts)
-        return jsonify([
-            {
-                'id': v.get('id'),
-                'title': v.get('title'),
-                'url': f"https://www.youtube.com/watch?v={v.get('id')}",
-                'thumbnail': v.get('thumbnails', [{}])[0].get('url')
-            } for v in info.get('entries', []) if v.get('id')
-        ])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/channel_playlists')
-def get_channel_playlists():
-    cid = request.args.get('id')
-    url = request.args.get('url') or f"https://www.youtube.com/channel/{cid}/playlists"
-    if not url:
-        return jsonify({'error': 'Missing url or id'}), 400
-
-    opts = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': True,
-        'cookiefile': COOKIES_PATH
-    }
-
-    try:
-        info = extract_info(url, opts)
-        return jsonify({
-            'playlists': [
-                {
-                    'id': v.get('id'),
-                    'title': v.get('title'),
-                    'url': f"https://www.youtube.com/playlist?list={v.get('id')}",
-                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
-                } for v in info.get('entries', []) if v.get('ie_key') == 'YoutubePlaylist'
-            ]
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
