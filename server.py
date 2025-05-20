@@ -201,31 +201,78 @@ def get_suggestions():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/search', methods=['GET'])
-def search_videos():
+
+
+
+@app.route('/search')
+def search():
     query = request.args.get('q')
     if not query:
         return jsonify({'error': 'Missing q parameter'}), 400
 
-    ydl_opts = {
+    opts = {
         'quiet': True,
         'skip_download': True,
         'extract_flat': True,
         'forcejson': True,
+        'cookiefile': COOKIES_PATH,
+        'default_search': 'ytsearch20',
     }
 
     try:
-        with YoutubeDL(ydl_opts) as ydl:
-            search_result = ydl.extract_info(f"ytsearch5:{query}", download=False)
-            videos = [{
-                'id': e.get('id'),
-                'title': e.get('title'),
-                'url': e.get('url'),
-                'thumbnail': e.get('thumbnail'),
-            } for e in search_result.get('entries', [])]
-            return jsonify(videos)
+        info = extract_info(query, opts)
+        results = []
+
+        for entry in info.get('entries', []):
+            if not entry.get('id'):
+                continue
+
+            result = {
+                'id': entry['id'],
+                'title': entry.get('title'),
+                'url': f"https://www.youtube.com/watch?v={entry['id']}" if entry.get('ie_key') == 'Youtube' else entry.get('url'),
+                'type': entry.get('_type', 'video')
+            }
+
+            # Distinguish between video, playlist, and channel
+            if entry.get('_type') == 'playlist':
+                result['type'] = 'playlist'
+                result['playlist_id'] = entry.get('id')
+            elif 'channel' in entry.get('url', ''):
+                result['type'] = 'channel'
+
+            results.append(result)
+
+        return jsonify({'results': results})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# @app.route('/search', methods=['GET'])
+# def search_videos():
+#     query = request.args.get('q')
+#     if not query:
+#         return jsonify({'error': 'Missing q parameter'}), 400
+
+#     ydl_opts = {
+#         'quiet': True,
+#         'skip_download': True,
+#         'extract_flat': True,
+#         'forcejson': True,
+#     }
+
+#     try:
+#         with YoutubeDL(ydl_opts) as ydl:
+#             search_result = ydl.extract_info(f"ytsearch5:{query}", download=False)
+#             videos = [{
+#                 'id': e.get('id'),
+#                 'title': e.get('title'),
+#                 'url': e.get('url'),
+#                 'thumbnail': e.get('thumbnail'),
+#             } for e in search_result.get('entries', [])]
+#             return jsonify(videos)
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/home')
