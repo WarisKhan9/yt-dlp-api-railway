@@ -58,6 +58,8 @@ def get_video_info():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+
 @app.route('/meta')
 def get_meta():
     url = request.args.get('url')
@@ -95,6 +97,43 @@ def get_meta():
         return jsonify({'error': str(e)}), 500
 
 
+
+
+# @app.route('/meta')
+# def get_meta():
+#     url = request.args.get('url')
+#     if not url:
+#         return jsonify({'error': 'Missing url parameter'}), 400
+
+#     opts = {
+#         'quiet': True,
+#         'skip_download': True,
+#         'no_warnings': True,
+#         'forcejson': True,
+#         'format': 'bestaudio/best',
+#         'extract_flat': False,
+#         'noplaylist': True,
+#         'youtube_include_dash_manifest': False,
+#         'ignoreerrors': True
+#     }
+
+#     try:
+#         with YoutubeDL(opts) as ydl:
+#             info = ydl.extract_info(url, download=False)
+#             thumbnail = info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+
+#             return jsonify({
+#                 'id': info.get('id'),
+#                 'title': info.get('title'),
+#                 'uploader': info.get('uploader'),
+#                 'view_count': info.get('view_count'),
+#                 'like_count': info.get('like_count'),
+#                 'thumbnail': thumbnail,
+#                 'duration': info.get('duration'),
+#                 'channel_url': info.get('channel_url')
+#             })
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 
 
