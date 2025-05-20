@@ -94,6 +94,7 @@ def get_meta():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/search')
 def search():
     query = request.args.get('q')
@@ -136,6 +137,50 @@ def search():
         return jsonify({'results': results})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# @app.route('/search')
+# def search():
+#     query = request.args.get('q')
+#     if not query:
+#         return jsonify({'error': 'Missing q parameter'}), 400
+
+#     opts = {
+#         'quiet': True,
+#         'skip_download': True,
+#         'extract_flat': True,
+#         'forcejson': True,
+#         'cookiefile': COOKIES_PATH,
+#         'default_search': 'ytsearch20',
+#     }
+
+#     try:
+#         info = extract_info(query, opts)
+#         results = []
+
+#         for entry in info.get('entries', []):
+#             if not entry.get('id'):
+#                 continue
+
+#             result = {
+#                 'id': entry['id'],
+#                 'title': entry.get('title'),
+#                 'url': f"https://www.youtube.com/watch?v={entry['id']}" if entry.get('ie_key') == 'Youtube' else entry.get('url'),
+#                 'type': entry.get('_type', 'video')
+#             }
+
+#             # Distinguish between video, playlist, and channel
+#             if entry.get('_type') == 'playlist':
+#                 result['type'] = 'playlist'
+#                 result['playlist_id'] = entry.get('id')
+#             elif 'channel' in entry.get('url', ''):
+#                 result['type'] = 'channel'
+
+#             results.append(result)
+
+#         return jsonify({'results': results})
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 @app.route('/playlist')
 def get_playlist():
