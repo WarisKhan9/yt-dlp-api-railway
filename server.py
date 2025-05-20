@@ -218,7 +218,7 @@ def search():
     }
 
     try:
-        info = extract_info(f"ytsearch50:{query}", opts)
+        info = extract_info(f"ytsearch10:{query}", opts)
         return jsonify({
             'results': [
                 {
