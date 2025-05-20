@@ -104,9 +104,9 @@ def search():
     ydl_opts = {
         'quiet': True,
         'skip_download': True,
-        # 'extract_flat': True,
+        'extract_flat': True,  # important for speed
         'forcejson': True,
-         'cookiefile': COOKIES_PATH,
+        'cookiefile': COOKIES_PATH,
         'default_search': 'ytsearch20',
     }
 
@@ -119,74 +119,88 @@ def search():
                 if not entry or not entry.get('id'):
                     continue
 
-                result_type = entry.get('_type', 'video')
-
-                if result_type == 'playlist':
-                    result_type = 'playlist'
-                    url = f"https://www.youtube.com/playlist?list={entry.get('id')}"
-                elif result_type == 'url' and 'channel' in entry.get('url', ''):
-                    result_type = 'channel'
-                    url = entry.get('url')
+                # Determine type
+                _type = entry.get('_type', 'video')
+                url = ''
+                if _type == 'playlist':
+                    _type = 'playlist'
+                    url = f"https://www.youtube.com/playlist?list={entry['id']}"
+                elif _type == 'url' and 'channel' in entry.get('url', ''):
+                    _type = 'channel'
+                    url = entry['url']
                 else:
-                    result_type = 'video'
-                    url = f"https://www.youtube.com/watch?v={entry.get('id')}"
+                    _type = 'video'
+                    url = f"https://www.youtube.com/watch?v={entry['id']}"
+
+                # Thumbnail fallback for video type
+                if _type == 'video':
+                    thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
+                else:
+                    thumbnail = entry.get('thumbnail', '')
 
                 results.append({
-                    'id': entry.get('id'),
+                    'id': entry['id'],
                     'title': entry.get('title'),
-                    'thumbnail': entry.get('thumbnails', [{}])[0].get('url') if entry.get('thumbnails') else f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg",
                     'url': url,
-                    'type': result_type
+                    'type': _type,
+                    'thumbnail': thumbnail
                 })
 
             return jsonify({'results': results})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-
-# @app.route('/search')
+# @app.route('/search', methods=['GET'])
 # def search():
 #     query = request.args.get('q')
 #     if not query:
 #         return jsonify({'error': 'Missing q parameter'}), 400
 
-#     opts = {
+#     ydl_opts = {
 #         'quiet': True,
 #         'skip_download': True,
-#         'extract_flat': True,
+#          'extract_flat': True,
 #         'forcejson': True,
-#         'cookiefile': COOKIES_PATH,
+#          'cookiefile': COOKIES_PATH,
 #         'default_search': 'ytsearch20',
 #     }
 
 #     try:
-#         info = extract_info(query, opts)
-#         results = []
+#         with YoutubeDL(ydl_opts) as ydl:
+#             info = ydl.extract_info(query, download=False)
+#             results = []
 
-#         for entry in info.get('entries', []):
-#             if not entry.get('id'):
-#                 continue
+#             for entry in info.get('entries', []):
+#                 if not entry or not entry.get('id'):
+#                     continue
 
-#             result = {
-#                 'id': entry['id'],
-#                 'title': entry.get('title'),
-#                 'url': f"https://www.youtube.com/watch?v={entry['id']}" if entry.get('ie_key') == 'Youtube' else entry.get('url'),
-#                 'type': entry.get('_type', 'video')
-#             }
+#                 result_type = entry.get('_type', 'video')
 
-#             # Distinguish between video, playlist, and channel
-#             if entry.get('_type') == 'playlist':
-#                 result['type'] = 'playlist'
-#                 result['playlist_id'] = entry.get('id')
-#             elif 'channel' in entry.get('url', ''):
-#                 result['type'] = 'channel'
+#                 if result_type == 'playlist':
+#                     result_type = 'playlist'
+#                     url = f"https://www.youtube.com/playlist?list={entry.get('id')}"
+#                 elif result_type == 'url' and 'channel' in entry.get('url', ''):
+#                     result_type = 'channel'
+#                     url = entry.get('url')
+#                 else:
+#                     result_type = 'video'
+#                     url = f"https://www.youtube.com/watch?v={entry.get('id')}"
 
-#             results.append(result)
+#                 results.append({
+#                     'id': entry.get('id'),
+#                     'title': entry.get('title'),
+#                     'thumbnail': entry.get('thumbnails', [{}])[0].get('url') if entry.get('thumbnails') else f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg",
+#                     'url': url,
+#                     'type': result_type
+#                 })
 
-#         return jsonify({'results': results})
+#             return jsonify({'results': results})
 #     except Exception as e:
 #         return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/playlist')
 def get_playlist():
