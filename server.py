@@ -216,7 +216,7 @@ def search_videos():
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            search_result = ydl.extract_info(f"ytsearch50:{query}", download=False)
+            search_result = ydl.extract_info(f"ytsearch5:{query}", download=False)
             videos = [{
                 'id': e.get('id'),
                 'title': e.get('title'),
