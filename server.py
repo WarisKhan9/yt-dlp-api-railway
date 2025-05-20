@@ -201,7 +201,7 @@ def search():
     try:
         # Use ytsearch format directly for full compatibility
         with YoutubeDL(ydl_opts) as ydl:
-            search_result = ydl.extract_info(f"ytsearch20:{query}", download=False)
+            search_result = ydl.extract_info(f"ytsearch50:{query}", download=False)
 
             results = []
             for entry in search_result.get('entries', []):
