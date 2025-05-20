@@ -213,12 +213,12 @@ def search():
         'no_warnings': True,
         'forcejson': True,
         'cookiefile': COOKIES_PATH,
-        'sleep_interval': 2,
-        'min_sleep_interval': 1,
+        'sleep_interval': 0,
+        'min_sleep_interval': 0,
     }
 
     try:
-        info = extract_info(f"ytsearch15:{query}", opts)
+        info = extract_info(f"ytsearch50:{query}", opts)
         return jsonify({
             'results': [
                 {
