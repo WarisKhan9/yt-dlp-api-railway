@@ -245,6 +245,7 @@ def get_home():
                 {
                     'id': v.get('id'),
                     'title': v.get('title'),
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url'),#
                     'url': f"https://www.youtube.com/watch?v={v.get('id')}"
                 } for v in info.get('entries', []) if v.get('id')
             ]
@@ -270,6 +271,7 @@ def get_trending():
                 {
                     'id': v.get('id'),
                     'title': v.get('title'),
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url'),#
                     'url': f"https://www.youtube.com/watch?v={v.get('id')}"
                 } for v in info.get('entries', []) if v.get('id')
             ]
@@ -318,6 +320,38 @@ def get_playlist_videos(url):
         ])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/channel_playlists')
+def get_channel_playlists():
+    cid = request.args.get('id')
+    url = request.args.get('url') or f"https://www.youtube.com/channel/{cid}/playlists"
+    if not url:
+        return jsonify({'error': 'Missing url or id'}), 400
+
+    opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'cookiefile': COOKIES_PATH
+    }
+
+    try:
+        info = extract_info(url, opts)
+        return jsonify({
+            'playlists': [
+                {
+                    'id': v.get('id'),
+                    'title': v.get('title'),
+                    'url': f"https://www.youtube.com/playlist?list={v.get('id')}",
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url')
+                } for v in info.get('entries', []) if v.get('ie_key') == 'YoutubePlaylist'
+            ]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
