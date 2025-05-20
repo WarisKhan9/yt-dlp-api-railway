@@ -98,43 +98,89 @@ def get_meta():
         return jsonify({'error': str(e)}), 500
 
 
+# @app.route('/search', methods=['GET'])
+# def search():
+#     query = request.args.get('q')
+#     if not query:
+#         return jsonify({'error': 'Missing q parameter'}), 400
 
-
-# @app.route('/meta')
-# def get_meta():
-#     url = request.args.get('url')
-#     if not url:
-#         return jsonify({'error': 'Missing url parameter'}), 400
-
-#     opts = {
+#     base_opts = {
 #         'quiet': True,
 #         'skip_download': True,
-#         'no_warnings': True,
+#         'extract_flat': True,
 #         'forcejson': True,
-#         'format': 'bestaudio/best',
-#         'extract_flat': False,
-#         'noplaylist': True,
-#         'youtube_include_dash_manifest': False,
-#         'ignoreerrors': True
+#         'cookiefile': COOKIES_PATH,
+#     }
+
+#     full_info_opts = {
+#         'quiet': True,
+#         'skip_download': True,
+#         'forcejson': True,
+#         'cookiefile': COOKIES_PATH,
 #     }
 
 #     try:
-#         with YoutubeDL(opts) as ydl:
-#             info = ydl.extract_info(url, download=False)
-#             thumbnail = info.get('thumbnail') or f"https://i.ytimg.com/vi/{info.get('id')}/hqdefault.jpg"
+#         with YoutubeDL(base_opts) as ydl:
+#             search_result = ydl.extract_info(f"ytsearch10:{query}", download=False)
 
-#             return jsonify({
-#                 'id': info.get('id'),
-#                 'title': info.get('title'),
-#                 'uploader': info.get('uploader'),
-#                 'view_count': info.get('view_count'),
-#                 'like_count': info.get('like_count'),
+#         results = []
+#         for entry in search_result.get('entries', []):
+#             if not entry or not entry.get('id'):
+#                 continue
+
+#             _type = entry.get('_type') or 'video'
+#             url = ''
+#             if _type == 'playlist':
+#                 url = f"https://www.youtube.com/playlist?list={entry['id']}"
+#             elif _type == 'url' and 'channel' in entry.get('url', ''):
+#                 _type = 'channel'
+#                 url = entry.get('url')
+#             else:
+#                 _type = 'video'
+#                 url = f"https://www.youtube.com/watch?v={entry['id']}"
+
+#             thumbnail = entry.get('thumbnail') or (
+#                 f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg" if _type == 'video' else ''
+#             )
+
+#             # Initialize extra metadata
+#             uploader = None
+#             view_count = None
+#             like_count = None
+#             duration = None
+
+#             # If it's a video, fetch full metadata
+#             if _type == 'video':
+#                 try:
+#                     with YoutubeDL(full_info_opts) as ydl_full:
+#                         info = ydl_full.extract_info(url, download=False)
+#                         uploader = info.get('uploader')
+#                         view_count = info.get('view_count')
+#                         like_count = info.get('like_count')
+#                         duration = info.get('duration')
+#                 except Exception as e:
+#                     pass  # Safe fail – partial data is still OK
+
+#             results.append({
+#                 'id': entry['id'],
+#                 'title': entry.get('title'),
+#                 'url': url,
+#                 'type': _type,
 #                 'thumbnail': thumbnail,
-#                 'duration': info.get('duration'),
-#                 'channel_url': info.get('channel_url')
+#                 'uploader': uploader,
+#                 'views': view_count,
+#                 'likes': like_count,
+#                 'duration': duration,
 #             })
+
+#         return jsonify({'results': results})
+
 #     except Exception as e:
 #         return jsonify({'error': str(e)}), 500
+
+
+
+
 
 
 
@@ -144,7 +190,7 @@ def search():
     if not query:
         return jsonify({'error': 'Missing q parameter'}), 400
 
-    base_opts = {
+    ydl_opts = {
         'quiet': True,
         'skip_download': True,
         'extract_flat': True,
@@ -152,132 +198,46 @@ def search():
         'cookiefile': COOKIES_PATH,
     }
 
-    full_info_opts = {
-        'quiet': True,
-        'skip_download': True,
-        'forcejson': True,
-        'cookiefile': COOKIES_PATH,
-    }
-
     try:
-        with YoutubeDL(base_opts) as ydl:
-            search_result = ydl.extract_info(f"ytsearch10:{query}", download=False)
+        # Use ytsearch format directly for full compatibility
+        with YoutubeDL(ydl_opts) as ydl:
+            search_result = ydl.extract_info(f"ytsearch20:{query}", download=False)
 
-        results = []
-        for entry in search_result.get('entries', []):
-            if not entry or not entry.get('id'):
-                continue
+            results = []
+            for entry in search_result.get('entries', []):
+                if not entry or not entry.get('id'):
+                    continue
 
-            _type = entry.get('_type') or 'video'
-            url = ''
-            if _type == 'playlist':
-                url = f"https://www.youtube.com/playlist?list={entry['id']}"
-            elif _type == 'url' and 'channel' in entry.get('url', ''):
-                _type = 'channel'
-                url = entry.get('url')
-            else:
-                _type = 'video'
-                url = f"https://www.youtube.com/watch?v={entry['id']}"
+                _type = entry.get('_type') or 'video'
+                url = ''
+                
+                # Detect type: playlist, channel, or video
+                if _type == 'playlist':
+                    url = f"https://www.youtube.com/playlist?list={entry['id']}"
+                elif _type == 'url' and 'channel' in entry.get('url', ''):
+                    _type = 'channel'
+                    url = entry.get('url')
+                else:
+                    _type = 'video'
+                    url = f"https://www.youtube.com/watch?v={entry['id']}"
 
-            thumbnail = entry.get('thumbnail') or (
-                f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg" if _type == 'video' else ''
-            )
+                # Thumbnail fallback for videos
+                thumbnail = entry.get('thumbnail')
+                if not thumbnail and _type == 'video':
+                    thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
 
-            # Initialize extra metadata
-            uploader = None
-            view_count = None
-            like_count = None
-            duration = None
+                results.append({
+                    'id': entry['id'],
+                    'title': entry.get('title'),
+                    'url': url,
+                    'type': _type,
+                    'thumbnail': thumbnail,
+                })
 
-            # If it's a video, fetch full metadata
-            if _type == 'video':
-                try:
-                    with YoutubeDL(full_info_opts) as ydl_full:
-                        info = ydl_full.extract_info(url, download=False)
-                        uploader = info.get('uploader')
-                        view_count = info.get('view_count')
-                        like_count = info.get('like_count')
-                        duration = info.get('duration')
-                except Exception as e:
-                    pass  # Safe fail – partial data is still OK
-
-            results.append({
-                'id': entry['id'],
-                'title': entry.get('title'),
-                'url': url,
-                'type': _type,
-                'thumbnail': thumbnail,
-                'uploader': uploader,
-                'views': view_count,
-                'likes': like_count,
-                'duration': duration,
-            })
-
-        return jsonify({'results': results})
+            return jsonify({'results': results})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-
-
-
-
-
-# @app.route('/search', methods=['GET'])
-# def search():
-#     query = request.args.get('q')
-#     if not query:
-#         return jsonify({'error': 'Missing q parameter'}), 400
-
-#     ydl_opts = {
-#         'quiet': True,
-#         'skip_download': True,
-#         'extract_flat': True,
-#         'forcejson': True,
-#         'cookiefile': COOKIES_PATH,
-#     }
-
-#     try:
-#         # Use ytsearch format directly for full compatibility
-#         with YoutubeDL(ydl_opts) as ydl:
-#             search_result = ydl.extract_info(f"ytsearch20:{query}", download=False)
-
-#             results = []
-#             for entry in search_result.get('entries', []):
-#                 if not entry or not entry.get('id'):
-#                     continue
-
-#                 _type = entry.get('_type') or 'video'
-#                 url = ''
-                
-#                 # Detect type: playlist, channel, or video
-#                 if _type == 'playlist':
-#                     url = f"https://www.youtube.com/playlist?list={entry['id']}"
-#                 elif _type == 'url' and 'channel' in entry.get('url', ''):
-#                     _type = 'channel'
-#                     url = entry.get('url')
-#                 else:
-#                     _type = 'video'
-#                     url = f"https://www.youtube.com/watch?v={entry['id']}"
-
-#                 # Thumbnail fallback for videos
-#                 thumbnail = entry.get('thumbnail')
-#                 if not thumbnail and _type == 'video':
-#                     thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
-
-#                 results.append({
-#                     'id': entry['id'],
-#                     'title': entry.get('title'),
-#                     'url': url,
-#                     'type': _type,
-#                     'thumbnail': thumbnail,
-#                 })
-
-#             return jsonify({'results': results})
-
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
 
 
 
