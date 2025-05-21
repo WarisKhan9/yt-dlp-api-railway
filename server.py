@@ -178,6 +178,8 @@ def get_playlist():
 
     try:
         info = extract_info(url, opts)
+        # thumbnail = f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg"
+
         return jsonify({
             'playlist': {
                 'title': info.get('title'),
@@ -186,6 +188,7 @@ def get_playlist():
                 'videos': [
                     {
                         'id': v.get('id'),
+                    'thumbnail': v.get('thumbnails', [{}])[0].get('url'),
                         'title': v.get('title'),
                         'url': f"https://www.youtube.com/watch?v={v.get('id')}"
                     } for v in info.get('entries', []) if v.get('id')
