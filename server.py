@@ -62,7 +62,7 @@ def get_video_info():
 
 
 
-@app.route('/meta', methods=['GET'])
+@app.route('/meta')
 def get_meta():
     url = request.args.get('url')
     if not url:
