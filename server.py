@@ -151,6 +151,8 @@ def search():
                     'title': entry.get('title'),
                     'url': url,
                     'type': _type,
+                    'view_count': info.get('view_count'),   #
+                     'like_count': info.get('like_count'),  #
                     'thumbnail': thumbnail,
                 })
 
