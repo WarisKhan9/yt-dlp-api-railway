@@ -262,8 +262,6 @@ def get_home():
                     'id': v.get('id'),
                     'title': v.get('title'),
                     'thumbnail': v.get('thumbnails', [{}])[0].get('url'),
-                    'view_count': info.get('view_count', [{}])[0].get('url'),#
-                    'like_count': info.get('like_count'),#
                     'url': f"https://www.youtube.com/watch?v={v.get('id')}"
                 } for v in info.get('entries', []) if v.get('id')
             ]
