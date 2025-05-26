@@ -25,7 +25,7 @@ def get_video_info():
         'no_warnings': True,
         'forcejson': True,
         'format': 'best',
-         'cookiefile': COOKIES_PATH
+         # 'cookiefile': COOKIES_PATH
 
     }
 
@@ -76,7 +76,7 @@ def get_meta():
         'noplaylist': True,
         'youtube_include_dash_manifest': False,
         'ignoreerrors': True,
-        'cookiefile': COOKIES_PATH,
+        # 'cookiefile': COOKIES_PATH,
     }
 
     try:
