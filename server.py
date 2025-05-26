@@ -25,7 +25,7 @@ def get_video_info():
         'no_warnings': True,
         'forcejson': True,
         'format': 'best',
-        'cookiefile': COOKIES_PATH
+        # 'cookiefile': COOKIES_PATH
 
     }
 
