@@ -21,5 +21,6 @@ WORKDIR /app
 COPY . .
 
 # Run Flask app
-CMD ["python", "server.py"]
+# CMD ["python", "server.py"]
+CMD ["python", "refresh_cookies.py"]
 
