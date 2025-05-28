@@ -9,6 +9,8 @@ ydl_opts = {
     'cookiefile': os.path.join(os.path.dirname(__file__), "cookies.txt"),
     'quiet': True,
     'no_warnings': True,
+    'verbose': True  # ADDED
+
 }
 
 try:
