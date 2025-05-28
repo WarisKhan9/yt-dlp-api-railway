@@ -34,6 +34,5 @@ jobs:
           git add cookies.txt
           git commit -m "🔁 Auto-refresh cookies.txt" || echo "No changes to commit"
 
-      - name: 🚀 Trigger Railway redeploy
-        run: curl -X POST ${{ secrets.RAILWAY_DEPLOY_HOOK }}
+     
 
