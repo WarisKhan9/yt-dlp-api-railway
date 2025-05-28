@@ -16,6 +16,13 @@ jobs:
       - name: 🔑 Run refresh_cookies.py
         run: python refresh_cookies.py
 
+      - name: 🧪 Print working directory
+        run: echo $PWD
+
+      - name: 🧪 List files
+        run: dir
+
+
       - name: 💾 Commit updated cookies
         run: |
           git config user.name 'github-actions[bot]'
