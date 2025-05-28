@@ -2,36 +2,26 @@ name: 🔁 Refresh yt-dlp Cookies
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Every 6 hours
-  workflow_dispatch:       # Manual trigger option
+    - cron: '*/30 * * * *'  # Every 30 minutes
+  workflow_dispatch:
 
 jobs:
   refresh:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: ⬇️ Checkout repository
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
 
-      - name: ⚙️ Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: 📦 Install yt-dlp[web]
-        run: |
-          pip install --upgrade pip
-          pip install "yt-dlp[web]"
-
-      - name: 🔑 Refresh cookies
-        run: |
-          yt-dlp --cookies-from-browser chrome "https://www.youtube.com" --cookies cookies.txt || echo "❌ Failed to refresh cookies"
+      - name: 🔑 Run refresh_cookies.py
+        run: python refresh_cookies.py
 
       - name: 💾 Commit updated cookies
         run: |
-          git config --global user.name "yt-dlp bot"
-          git config --global user.email "yt-dlp-bot@example.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'yt-dlp-bot@example.com'
           git add cookies.txt
-          git commit -m "🔁 Auto-refresh cookies.txt" || echo "No changes to commit"
-
-     
+          git commit -m '🔁 Auto-refresh cookies.txt' || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
