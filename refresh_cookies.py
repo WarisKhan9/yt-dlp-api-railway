@@ -1,12 +1,12 @@
-# refresh_cookies.py
 import os
 import yt_dlp
 
-cookie_path = os.path.join(os.path.dirname(__file__), "cookies.txt")
+# Replace with your real Chrome profile path
+chrome_profile_path = r"C:\Users\topup\AppData\Local\Google\Chrome\User Data\Default"
 
 ydl_opts = {
-    'cookiesfrombrowser': ('chrome',),
-    'cookiefile': cookie_path,
+    'cookiesfrombrowser': ('chrome', {'profile': chrome_profile_path}),
+    'cookiefile': os.path.join(os.path.dirname(__file__), "cookies.txt"),
     'quiet': True,
     'no_warnings': True,
 }
