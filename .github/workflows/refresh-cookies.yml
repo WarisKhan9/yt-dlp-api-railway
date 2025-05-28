@@ -3,7 +3,7 @@ name: 🔁 Refresh yt-dlp Cookies
 on:
   schedule:
     - cron: '*/30 * * * *'  # Every 30 minutes
-  workflow_dispatch:
+  workflow_dispatch:        # Manual trigger option
 
 jobs:
   refresh:
