@@ -4,7 +4,7 @@ import yt_dlp
 cookie_path = os.path.join(os.path.dirname(__file__), "cookies.txt")
 
 ydl_opts = {
-    'cookiesfrombrowser': 'chrome:profile=Default',  # ✅ FIXED
+    'cookiesfrombrowser': ('chrome', {'profile': 'Default'}),
     'cookiefile': cookie_path,
     'quiet': True,
     'no_warnings': True,
