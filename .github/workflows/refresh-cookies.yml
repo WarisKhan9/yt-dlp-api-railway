@@ -2,7 +2,7 @@ name: 🔁 Refresh yt-dlp Cookies
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # every 30 minutes
+    - cron: '*/30 * * * *'  # Every 30 minutes
   workflow_dispatch:
 
 jobs:
@@ -14,14 +14,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 🧪 Run refresh_cookies.py
+        run: python refresh_cookies.py
         shell: pwsh
-        run: |
-          Write-Host "Running refresh_cookies.py..."
-          python refresh_cookies.py
-        continue-on-error: false
 
       - name: 💾 Commit updated cookies
-        shell: pwsh
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'yt-dlp-bot@example.com'
