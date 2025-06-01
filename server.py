@@ -9,6 +9,19 @@ def extract_info(url, opts):
     with YoutubeDL(opts) as ydl:
         return ydl.extract_info(url, download=False)
 
+# adding tis from here 
+def read_cookie_string():
+    try:
+        with open(COOKIES_PATH, 'r') as f:
+            # Flatten the cookies into a single string
+            return '; '.join(
+                line.strip().split('\t')[-1]
+                for line in f if not line.startswith('#') and len(line.strip().split('\t')) >= 7
+            )
+    except Exception as e:
+        return ''
+
+# to here
 @app.route('/')
 def root():
     return '✅ YouTube DL API is running!'
@@ -42,6 +55,8 @@ def get_video_info():
                 'like_count': info.get('like_count'),
                 'uploader': info.get('uploader'),
                 'channel_url': info.get('channel_url'),
+                'cookie': cookie_string,  # 🔥 Added this line
+
                 'formats': [
                     {
                         'format_id': f.get('format_id'),
