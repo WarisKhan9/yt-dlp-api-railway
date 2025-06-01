@@ -13,13 +13,18 @@ def extract_info(url, opts):
 def read_cookie_string():
     try:
         with open(COOKIES_PATH, 'r') as f:
-            # Flatten the cookies into a single string
-            return '; '.join(
-                line.strip().split('\t')[-1]
-                for line in f if not line.startswith('#') and len(line.strip().split('\t')) >= 7
-            )
+            # Correct flattening from Netscape cookie file format
+            cookies = []
+            for line in f:
+                if line.startswith('#') or not line.strip():
+                    continue
+                parts = line.strip().split('\t')
+                if len(parts) >= 7:
+                    cookies.append(f"{parts[5]}={parts[6]}")
+            return '; '.join(cookies)
     except Exception as e:
         return ''
+
 
 # to here
 @app.route('/')
