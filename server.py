@@ -45,6 +45,8 @@ def get_video_info():
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
+            cookie_string = read_cookie_string()  #added this
+
             return jsonify({
                 'id': info.get('id'),
                 'title': info.get('title'),
